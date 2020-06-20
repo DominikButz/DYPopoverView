@@ -8,9 +8,9 @@
 import Foundation
 import SwiftUI
 
-public enum ViewPosition {
+public enum ViewPosition:String, CaseIterable {
     
-    case top, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft, none
+    case top = "Top", topRight = "Top Right", right = "Right", bottomRight = "Bottom Right", bottom = "Bottom", bottomLeft = "Bottom Left", left = "Left", topLeft = "Top Left", none = "None"
     
     var opposite: ViewPosition {
         switch self {
@@ -43,72 +43,19 @@ struct RoundedArrowRectangle: Shape {
     let arrowLength: CGFloat
     let cornerRadius: (tl:CGFloat, tr:CGFloat, bl: CGFloat, br: CGFloat)
 
-    
-    var margin: CGFloat {
-        switch self.arrowPosition {
-        case .bottomLeft, .bottomRight, .topRight, .topLeft :
-            return arrowLength / 3
-        default:
-            return arrowLength
-        }
-    }
-    
-    func edgePointsFor(rect: CGRect)-> (maxX: CGFloat,  minX: CGFloat, maxY: CGFloat, minY: CGFloat) {
-        
-        var maxX:CGFloat = rect.maxX
-        var minX: CGFloat = rect.minX
-        var maxY: CGFloat = rect.maxY
-        var minY: CGFloat = rect.minY
-//        var actualMargin = 0
-        
-        switch arrowPosition {
-        case  .topLeft:
-              minX = rect.minX + margin
-              minY  = rect.minY + margin
-        case .top:
-            minY = rect.minY + margin
-        case .topRight:
-            maxX = rect.maxX - margin
-            minY = rect.minY + margin
-        case .right:
-            maxX = rect.maxX - margin
-        case .bottomRight:
-          maxX = rect.maxX - margin
-         maxY = rect.maxY - margin
-        case .bottom:
-            maxY = rect.maxY - margin
-        case .bottomLeft:
-            maxY = rect.maxY - margin
-            minX = rect.minX + margin
-        case .left:
-            minX = rect.minX + margin
-        case .none:
-            print("no change required")
-        }
-        
-        return (maxX: maxX, minX: minX, maxY:maxY, minY: minY)
-        
-    }
-    
-    
     func path(in rect: CGRect) -> Path {
       
-        let w = rect.size.width - margin
-        let h = rect.size.height  - margin
+        let w = rect.size.width
+        let h = rect.size.height
         let tr = min(min(self.cornerRadius.tr, h/2), w/2)
         let tl = min(min(self.cornerRadius.tl, h/2), w/2)
         let bl = min(min(self.cornerRadius.bl, h/2), w/2)
         let br = min(min(self.cornerRadius.br, h/2), w/2)
         
-//        let edgePoints = self.edgePointsFor(rect: rect)
-//        let maxX = edgePoints.maxX
-//        let minX = edgePoints.minX
-//        let maxY  = edgePoints.maxY
-//        let minY = edgePoints.minY
-        let maxX = rect.maxX - margin
-        let minX = rect.minX + margin
-        let maxY = rect.maxY - margin
-        let minY = rect.minY + margin
+        let maxX = rect.maxX
+        let minX = rect.minX
+        let maxY = rect.maxY
+        let minY = rect.minY
 
 
         let triangleSideLength : CGFloat = arrowLength / CGFloat(sqrt(0.75))
@@ -116,7 +63,7 @@ struct RoundedArrowRectangle: Shape {
         let actualArrowPosition: ViewPosition = self.arrowLength > 0  ? self.arrowPosition : .none
 
         var path = Path()
- //+ triangleSideLength / 2
+ 
         path.move(to: CGPoint(x: minX , y: minY))
 
         if actualArrowPosition == .top {
@@ -129,7 +76,7 @@ struct RoundedArrowRectangle: Shape {
         } else {
             // top right corner
             path.addLine(to: CGPoint(x: w - tr, y: minY))
-            path.addArc(center: CGPoint(x: w - tr, y: tr + margin), radius: tr,
+            path.addArc(center: CGPoint(x: w - tr, y: tr), radius: tr,
                         startAngle: Angle(degrees: -90), endAngle: Angle(degrees: 0), clockwise: false)
             
         }
@@ -155,16 +102,16 @@ struct RoundedArrowRectangle: Shape {
         // bottom arrow
         if actualArrowPosition == .bottom {
             path = self.makeArrow(path: &path, rect:rect, triangleSideLength: triangleSideLength, position: actualArrowPosition)
-            path.addLine(to: CGPoint(x: bl + margin, y: maxY))
-            path.addArc(center: CGPoint(x: bl + margin, y: h - bl), radius: bl,
+            path.addLine(to: CGPoint(x: bl, y: maxY))
+            path.addArc(center: CGPoint(x: bl, y: h - bl), radius: bl,
                                startAngle: Angle(degrees: 90), endAngle: Angle(degrees: 180), clockwise: false)
             // or bottom left arrow
         } else if actualArrowPosition == .bottomLeft {
             path = self.makeArrow(path: &path, rect:rect, triangleSideLength: triangleSideLength, position: actualArrowPosition)
 
         } else { // or straight line + bottom left corner
-            path.addLine(to: CGPoint(x: bl + margin, y: maxY))
-            path.addArc(center: CGPoint(x: bl + margin, y: h - bl), radius: bl,
+            path.addLine(to: CGPoint(x: bl, y: maxY))
+            path.addArc(center: CGPoint(x: bl, y: h - bl), radius: bl,
                                startAngle: Angle(degrees: 90), endAngle: Angle(degrees: 180), clockwise: false)
 
         }
@@ -174,8 +121,8 @@ struct RoundedArrowRectangle: Shape {
            path =  self.makeArrow(path: &path, rect:rect, triangleSideLength: triangleSideLength, position: actualArrowPosition)
        
             // and top left corner:
-             path.addLine(to: CGPoint(x: minX, y: tl + margin))
-                       path.addArc(center: CGPoint(x: tl + margin, y: tl + margin), radius: tl,
+             path.addLine(to: CGPoint(x: minX, y: tl))
+             path.addArc(center: CGPoint(x: tl, y: tl), radius: tl,
                                    startAngle: Angle(degrees: 180), endAngle: Angle(degrees: 270), clockwise: false)
             
         } else if actualArrowPosition == .topLeft {
@@ -184,8 +131,8 @@ struct RoundedArrowRectangle: Shape {
 
         } else {
             // line + top left corner
-            path.addLine(to: CGPoint(x: minX, y: tl + margin))
-            path.addArc(center: CGPoint(x: tl + margin, y: tl + margin), radius: tl,
+            path.addLine(to: CGPoint(x: minX, y: tl))
+            path.addArc(center: CGPoint(x: tl, y: tl), radius: tl,
                         startAngle: Angle(degrees: 180), endAngle: Angle(degrees: 270), clockwise: false)
 
         }
@@ -200,21 +147,21 @@ struct RoundedArrowRectangle: Shape {
         
         switch arrowPosition {
         case .left:
-            return (CGPoint(x: rect.minX + margin, y: rect.midY + (triangleSideLength / 2)), CGPoint(x: rect.minX, y: rect.midY), CGPoint(x: rect.minX + margin, y: rect.midY - (triangleSideLength/2)))
+            return (CGPoint(x: rect.minX, y: rect.midY + (triangleSideLength / 2)), CGPoint(x: rect.minX - arrowLength, y: rect.midY), CGPoint(x: rect.minX , y: rect.midY - (triangleSideLength/2)))
         case .topLeft:
-             return (CGPoint(x: rect.minX + margin, y: rect.minY + margin + (triangleSideLength / 2)), CGPoint(x: rect.minX + margin - triangleSideLength / 4, y: rect.minY + margin - (triangleSideLength / 4)), CGPoint(x: rect.minX + margin + triangleSideLength / 2, y: rect.minY + margin) )
+             return (CGPoint(x: rect.minX, y: rect.minY + (triangleSideLength / 2)), CGPoint(x: rect.minX - triangleSideLength / 4, y: rect.minY - (triangleSideLength / 4)), CGPoint(x: rect.minX + triangleSideLength / 2, y: rect.minY))
         case .top:
-            return (CGPoint(x: rect.midX - triangleSideLength / 2 , y: rect.minY + margin), CGPoint(x: rect.midX, y: rect.minY), CGPoint(x: rect.midX + triangleSideLength / 2, y: rect.minY + margin) )
+            return (CGPoint(x: rect.midX - triangleSideLength / 2 , y: rect.minY), CGPoint(x: rect.midX, y: rect.minY - arrowLength), CGPoint(x: rect.midX + triangleSideLength / 2, y: rect.minY) )
         case .topRight:
-            return (CGPoint(x: rect.maxX - margin - triangleSideLength / 2, y: rect.minY + margin),CGPoint(x: rect.maxX - margin + triangleSideLength / 4, y: rect.minY + margin - (triangleSideLength / 4)), CGPoint(x: rect.maxX - margin, y: rect.minY + margin + triangleSideLength / 2))
+            return (CGPoint(x: rect.maxX - triangleSideLength / 2, y: rect.minY),CGPoint(x: rect.maxX + triangleSideLength / 4, y: rect.minY - (triangleSideLength / 4)), CGPoint(x: rect.maxX, y: rect.minY + triangleSideLength / 2))
         case .right:
-            return (CGPoint(x: rect.maxX - margin, y: rect.midY - (triangleSideLength / 2)), CGPoint(x: rect.maxX, y: rect.midY), CGPoint(x: rect.maxX - margin, y: rect.midY + (triangleSideLength/2)))
+            return (CGPoint(x: rect.maxX, y: rect.midY - (triangleSideLength / 2)), CGPoint(x: rect.maxX + arrowLength, y: rect.midY), CGPoint(x: rect.maxX, y: rect.midY + (triangleSideLength/2)))
         case .bottomRight:
-            return (CGPoint(x: rect.maxX - margin, y: rect.maxY - margin - triangleSideLength / 2),CGPoint(x: rect.maxX - margin + triangleSideLength / 4, y: rect.maxY - margin + (triangleSideLength / 4)), CGPoint(x: rect.maxX - margin  - triangleSideLength / 2, y: rect.maxY - margin))
+            return (CGPoint(x: rect.maxX, y: rect.maxY - triangleSideLength / 2),CGPoint(x: rect.maxX + triangleSideLength / 4, y: rect.maxY + (triangleSideLength / 4)), CGPoint(x: rect.maxX  - triangleSideLength / 2, y: rect.maxY))
         case .bottom:
-            return (CGPoint(x: rect.midX + triangleSideLength / 2 , y: rect.maxY - margin), CGPoint(x: rect.midX, y: rect.maxY),  CGPoint(x: rect.midX - triangleSideLength / 2, y: rect.maxY - margin))
+            return (CGPoint(x: rect.midX + triangleSideLength / 2 , y: rect.maxY), CGPoint(x: rect.midX, y: rect.maxY + arrowLength),  CGPoint(x: rect.midX - triangleSideLength / 2, y: rect.maxY))
         case .bottomLeft:
-            return (CGPoint(x: rect.minX + margin + triangleSideLength / 2, y: rect.maxY - margin), CGPoint(x: rect.minX + margin - triangleSideLength / 4, y: rect.maxY - margin + (triangleSideLength / 4)), CGPoint(x: rect.minX + margin, y: rect.maxY -  margin - triangleSideLength / 2))
+            return (CGPoint(x: rect.minX + triangleSideLength / 2, y: rect.maxY), CGPoint(x: rect.minX - triangleSideLength / 4, y: rect.maxY + (triangleSideLength / 4)), CGPoint(x: rect.minX, y: rect.maxY - triangleSideLength / 2))
         default:
             return (CGPoint.zero, CGPoint.zero, CGPoint.zero)
         }
@@ -238,7 +185,7 @@ struct RoundedArrowRectangle_Preview: PreviewProvider {
     
     static var previews: some View {
         
-        return RoundedArrowRectangle(arrowPosition: .bottomLeft, arrowLength: 20, cornerRadius: (tl:10, tr:10, bl:10, br:10)).background(Color.yellow).frame(width: 200, height: 150)
+        return RoundedArrowRectangle(arrowPosition: .bottom, arrowLength: 20, cornerRadius: (tl:10, tr:10, bl:10, br:10)).frame(width: 200, height: 150)
     }
 }
 
