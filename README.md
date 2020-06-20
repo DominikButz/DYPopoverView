@@ -165,13 +165,3 @@ dominikbutz@gmail.com
 
 DYPopoverView is available under the MIT license. See the LICENSE file for more info.
 
-
-<<<<<<< HEAD
-||||||| edec239
-A description of this package.
-=======
-This a an example projet for DYPopoverView. 
-Go to https://github.com/DominikButz/DYPopoverView for details
-
-
->>>>>>> 798bc87ddc8e9ae8d70426803cc0af657c569e6a
