@@ -120,8 +120,8 @@ See the following example for details.
                     
                     
                 }.frame(width: proxy.size.width).background(Color(.systemBackground))
-                    .popoverView(content: AnyView(Text("Content")), isPresented: self.$showFirstPopover, frame: .constant(CGRect(x: 0, y: 0, width: 150, height: 150)), popoverType: .popout, position: self.popoverPosition, viewId: "0", settings: self.customPopoverSettings0())
-                    .popoverView(content: AnyView(ContentExample(frame: self.$secondPopoverFrame, show:self.$showSecondPopover)), isPresented: self.$showSecondPopover, frame: self.$secondPopoverFrame, popoverType: .popover, position: self.popoverPosition, viewId: "1", settings: self.customPopoverSettings1())
+                    .popoverView(content: {Text("Content")}, isPresented: self.$showFirstPopover, frame: .constant(CGRect(x: 0, y: 0, width: 150, height: 150)), popoverType: .popout, position: self.popoverPosition, viewId: "0", settings: self.customPopoverSettings0())
+                    .popoverView(content: {ContentExample(frame: self.$secondPopoverFrame, show:self.$showSecondPopover)}, isPresented: self.$showSecondPopover, frame: self.$secondPopoverFrame, popoverType: .popover, position: self.popoverPosition, viewId: "1", settings: self.customPopoverSettings1())
 
              }
             }
@@ -151,7 +151,9 @@ See the following example for details.
 
 ## Change log
 
-
+#### [Version 0.2](https://github.com/DominikButz/DYPopoverView/releases/tag/0.2)
+ Initializer changed - the content view needs to be put in a closure instead of casting it to AnyView.
+ 
 #### [Version 0.1](https://github.com/DominikButz/DYPopoverView/releases/tag/0.1)
 
 Initial public release. 

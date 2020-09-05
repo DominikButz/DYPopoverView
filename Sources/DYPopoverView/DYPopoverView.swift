@@ -13,9 +13,9 @@ public enum PopoverType {
     case popover, popout
 }
 
- struct PopoverViewModifier: ViewModifier {
+ struct PopoverViewModifier<ContentView: View>: ViewModifier {
     
-    var contentView: AnyView
+    var contentView: ()->ContentView
     @Binding var show: Bool
     @Binding var frame: CGRect
     var popoverType: PopoverType
@@ -30,26 +30,25 @@ public enum PopoverType {
                  return GeometryReader { geometry in
                          ZStack {
                          
-                            return self.popoverView(geometry, preferences, popoverType: self.popoverType, content: AnyView(self.contentView), isPresented: self.$show, frame: self.$frame, position: self.position, viewId: self.viewId, settings: self.settings)
+                            return self.popoverView(geometry, preferences, popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, position: self.position, viewId: self.viewId, settings: self.settings)
 
                          }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                  }
          }
     }
     
-     internal func popoverView(_ geometry: GeometryProxy, _ preferences: [DYPopoverViewOriginPreference], popoverType: PopoverType, content: AnyView, isPresented: Binding<Bool>, frame: Binding<CGRect>, position: ViewPosition, viewId: String?, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
+     internal func popoverView<ContentView: View>(_ geometry: GeometryProxy, _ preferences: [DYPopoverViewOriginPreference], popoverType: PopoverType, content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, position: ViewPosition, viewId: String?, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
 
           let originPreference = preferences.first(where: { $0.viewId == viewId })
           let originBounds = originPreference != nil ? geometry[originPreference!.bounds] : .zero
 
-         return  content
+         return  content()
              .modifier(PopoverFrame(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType))
              .background(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius).fill(settings.backgroundColor))
              .opacity(viewId != nil && isPresented.wrappedValue ? 1 : 0)
              .clipShape(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius)).shadow(radius: settings.shadowRadius)
              .modifier(PopoverOffset(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType, position: position, addOffset: settings.offset, arrowLength: settings.arrowLength))
-            
-          .animation(settings.animation)
+             .animation(settings.animation)
           
       }
      
@@ -78,7 +77,7 @@ internal struct PopoverFrame: ViewModifier {
             return content.frame(width:  viewFrame.width , height: viewFrame.height)
             
         } else {
-            
+            // popout
              return  content.frame(width: isPresented ? viewFrame.width : originBounds.width, height: isPresented ? viewFrame.height: originBounds.height)
         }
         
@@ -194,7 +193,7 @@ public extension View {
     - Parameter settings: a DYPopoverViewSettings struct. You can create a settings struct and override each property. If you don't pass in a settings struct, the default values will be used instead.
      - Returns: the popover view
     */
-    func popoverView(content: AnyView, isPresented: Binding<Bool>, frame: Binding<CGRect>, popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
+    func popoverView<ContentView: View>(content: @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
         self.modifier(PopoverViewModifier(contentView: content, show: isPresented,  frame: frame, popoverType: popoverType, position: position, viewId: viewId, settings: settings))
     }
 }
