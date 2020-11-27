@@ -1,11 +1,11 @@
-# DYPopoverView (iOS 13 / iPadOS)
+# DYPopoverView
 
 [![Version](https://img.shields.io/cocoapods/v/DYPopoverView.svg?style=flat)](https://cocoapods.org/pods/DYPopoverView)
 [![License](https://img.shields.io/cocoapods/l/DYPopoverView.svg?style=flat)](https://cocoapods.org/pods/DYPopoverView)
 [![Platform](https://img.shields.io/cocoapods/p/DYPopoverView.svg?style=flat)](https://cocoapods.org/pods/DYPopoverView)
 
 
-DYPopoverView is a simple SwiftUI accessory popover view for iOS and iPadOS.
+DYPopoverView is a simple SwiftUI accessory popover view for iOS and iPadOS. Works on iOS / iPadOS 13 or later. 
 
 ## Example project
 
@@ -17,7 +17,6 @@ You need to add the DYPopoverView package either through cocoapods or the Swift 
 * 8 positions with automatically adapting arrow position
 * set as popout or popover
 * Customize the following settings:
-	- backgroundColor
 	- animation
 	- offset
 	- differentArrowPosition
@@ -120,29 +119,13 @@ See the following example for details.
                     
                     
                 }.frame(width: proxy.size.width).background(Color(.systemBackground))
-                    .popoverView(content: {Text("Content")}, isPresented: self.$showFirstPopover, frame: .constant(CGRect(x: 0, y: 0, width: 150, height: 150)), popoverType: .popout, position: self.popoverPosition, viewId: "0", settings: self.customPopoverSettings0())
-                    .popoverView(content: {ContentExample(frame: self.$secondPopoverFrame, show:self.$showSecondPopover)}, isPresented: self.$showSecondPopover, frame: self.$secondPopoverFrame, popoverType: .popover, position: self.popoverPosition, viewId: "1", settings: self.customPopoverSettings1())
+                .popoverView(content: {Text("Content")}, background: {BlurView(style: .systemChromeMaterial)}, isPresented: self.$showFirstPopover, frame: .constant(CGRect(x: 0, y: 0, width: 150, height: 150)), popoverType: .popout, position: self.popoverPosition, viewId: "0", settings: DYPopoverViewSettings(shadowRadius: 20))
+                .popoverView(content: {ContentExample(frame: self.$secondPopoverFrame, show:self.$showSecondPopover)}, background: {Color(.secondarySystemBackground)}, isPresented: self.$showSecondPopover, frame: self.$secondPopoverFrame, popoverType: .popover, position: self.popoverPosition, viewId: "1", settings: DYPopoverViewSettings(cornerRadius: (30, 30, 30, 30)))
 
              }
             }
         }
-        
-        func customPopoverSettings0()->DYPopoverViewSettings {
-            
-            var settings = DYPopoverViewSettings()
-            //settings.differentArrowPosition = .topLeft
-            settings.shadowRadius = 20
-          //  settings.offset = CGPoint(x: 220, y:0)
-            return settings
-        }
-        
-        func customPopoverSettings1()->DYPopoverViewSettings {
-            
-            var settings = DYPopoverViewSettings()
-            settings.cornerRadius = (30, 30, 30, 30)
-          // settings.arrowLength = 50
-            return settings
-        }
+
     }
    
 
@@ -150,6 +133,9 @@ See the following example for details.
 
 
 ## Change log
+
+#### [Version 1.0](https://github.com/DominikButz/DYPopoverView/releases/tag/1.0)
+ Initializer changed - added background. Removed backgroundColor from settings. 
 
 #### [Version 0.2](https://github.com/DominikButz/DYPopoverView/releases/tag/0.2)
  Initializer changed - the content view needs to be put in a closure instead of casting it to AnyView.

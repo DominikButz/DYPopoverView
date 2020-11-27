@@ -13,9 +13,10 @@ public enum PopoverType {
     case popover, popout
 }
 
- struct PopoverViewModifier<ContentView: View>: ViewModifier {
+struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifier {
     
     var contentView: ()->ContentView
+    var backgroundView: ()->BackgroundView
     @Binding var show: Bool
     @Binding var frame: CGRect
     var popoverType: PopoverType
@@ -30,23 +31,25 @@ public enum PopoverType {
                  return GeometryReader { geometry in
                          ZStack {
                          
-                            return self.popoverView(geometry, preferences, popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, position: self.position, viewId: self.viewId, settings: self.settings)
+                            return self.popoverView(geometry, preferences, popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, background: self.backgroundView, position: self.position, viewId: self.viewId, settings: self.settings)
 
                          }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                  }
          }
     }
     
-     internal func popoverView<ContentView: View>(_ geometry: GeometryProxy, _ preferences: [DYPopoverViewOriginPreference], popoverType: PopoverType, content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, position: ViewPosition, viewId: String?, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
+    internal func popoverView<ContentView: View, BackgroundView: View>(_ geometry: GeometryProxy, _ preferences: [DYPopoverViewOriginPreference], popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, background: @escaping ()->BackgroundView,  position: ViewPosition, viewId: String?, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
 
           let originPreference = preferences.first(where: { $0.viewId == viewId })
           let originBounds = originPreference != nil ? geometry[originPreference!.bounds] : .zero
 
          return  content()
              .modifier(PopoverFrame(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType))
-             .background(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius).fill(settings.backgroundColor))
+            .background(background().frame(width:frame.wrappedValue.width + settings.arrowLength * 2, height: frame.wrappedValue.height + settings.arrowLength * 2))
+//             .background(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius).fill(settings.backgroundColor))
              .opacity(viewId != nil && isPresented.wrappedValue ? 1 : 0)
-             .clipShape(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius)).shadow(radius: settings.shadowRadius)
+            .clipShape(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius))
+            .shadow(color: settings.shadowColor, radius: settings.shadowRadius)
              .modifier(PopoverOffset(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType, position: position, addOffset: settings.offset, arrowLength: settings.arrowLength))
              .animation(settings.animation)
           
@@ -185,6 +188,7 @@ public extension View {
     /**
     popoverView function.
      - Parameter content: the content that shall appear inside the popover view.
+     - Parameter background: Background view of the DYPopover. Don't set a frame or decorations like shadow etc.
      - Parameter isPresented: pass in the state binding which determines if the popover should be displayed.
      - Parameter  frame: the frame of the popover view. As a Binding var, it can be changed during presentation is necessary.
      - Parameter popoverType: the type of the popover - popout or popover
@@ -193,8 +197,8 @@ public extension View {
     - Parameter settings: a DYPopoverViewSettings struct. You can create a settings struct and override each property. If you don't pass in a settings struct, the default values will be used instead.
      - Returns: the popover view
     */
-    func popoverView<ContentView: View>(content: @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
-        self.modifier(PopoverViewModifier(contentView: content, show: isPresented,  frame: frame, popoverType: popoverType, position: position, viewId: viewId, settings: settings))
+    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>, popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
+        self.modifier(PopoverViewModifier(contentView: content, backgroundView: background, show: isPresented,  frame: frame, popoverType: popoverType, position: position, viewId: viewId, settings: settings))
     }
 }
 
@@ -204,21 +208,42 @@ public extension View {
 // DYPopoverViewSettings struct
 public struct DYPopoverViewSettings {
     /// DYPopoverViewSettings initializer
-    public init(){}
+    
+    /**
+    DYPopoverSettings initializer.
+      - Parameter arrowLength : the length of the arrow. if you set it to 0, the popover will be without arrow.
+     - Parameter differentArrowPosition: change the position of the arrow to a different position than the opposite of the view position. default is none - the position will be opposite to the position of the view relative to its anchor view.
+     - Parameter  cornerRadius: corner radius tuple for top left, top right, bottom left, bottom right values.
+     - Parameter shadowRadius: shadow radius of the popover view background
+     - Parameter shadowColor: the background shadow color
+    - Parameter offset: allows to change the position of the popover in presented state. default: no offset
+    - Parameter animation: animation which determines how the popover shall appear.
+    */
+    public init(arrowLength: CGFloat = 20, differentArrowPosition: ViewPosition = .none, cornerRadius:(tl:CGFloat, tr:CGFloat, bl: CGFloat, br: CGFloat) = (tl:10, tr:10, bl:10, br:10), shadowRadius: CGFloat = 10, shadowColor: Color = Color(.systemGray3), offset: CGSize = CGSize.zero, animation: Animation = .spring() ){
+        
+        self.arrowLength = arrowLength
+        self.differentArrowPosition = differentArrowPosition
+        self.cornerRadius = cornerRadius
+        self.shadowRadius = shadowRadius
+        self.shadowColor = shadowColor
+        self.offset = offset
+        self.animation = animation
+        
+    }
     /// shadow radius of the popover view.
-    public var shadowRadius: CGFloat = 10
-    /// background of the popover view
-    public var backgroundColor: Color = Color(.secondarySystemBackground)
+    var shadowRadius: CGFloat
+    ///the background shadow color
+    var shadowColor: Color
   /// animation which determines how the popover shall appear.
-    public var animation: Animation = .spring(response: 0.3, dampingFraction: 0.7, blendDuration: 1)
+    var animation: Animation
     /// allows to change the position of the popover in presented state. default: no offset
-    public var offset: CGSize = CGSize.zero
+    var offset: CGSize
     ///change the position of the arrow to a different position than the opposite of the view position. default is none - the position will be opposite to the position of the view relative to its anchor view.
-    public var differentArrowPosition: ViewPosition = .none
+    var differentArrowPosition: ViewPosition
     // the length of the arrow. if you set it to 0, the popover will be without arrow.
-    public var arrowLength: CGFloat = 20
+    var arrowLength: CGFloat
     ///corner radius tuple for top left, top right, bottom left, bottom right values.
-    public  var cornerRadius: (tl:CGFloat, tr:CGFloat, bl: CGFloat, br: CGFloat) = (tl:10, tr:10, bl:10, br:10)
+   var cornerRadius: (tl:CGFloat, tr:CGFloat, bl: CGFloat, br: CGFloat)
 }
 
 ///DYPopoverViewOriginBoundsPreferenceKey
