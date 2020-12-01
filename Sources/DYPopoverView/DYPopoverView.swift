@@ -41,7 +41,8 @@ struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifie
     internal func popoverView<ContentView: View, BackgroundView: View>(_ geometry: GeometryProxy, _ preferences: [DYPopoverViewOriginPreference], popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, background: @escaping ()->BackgroundView,  position: ViewPosition, viewId: String?, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
 
           let originPreference = preferences.first(where: { $0.viewId == viewId })
-          let originBounds = originPreference != nil ? geometry[originPreference!.bounds] : .zero
+        let originBounds: CGRect = originPreference != nil ? geometry[originPreference!.bounds] : .zero
+
 
          return  content()
              .modifier(PopoverFrame(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType))
@@ -197,7 +198,7 @@ public extension View {
     - Parameter settings: a DYPopoverViewSettings struct. You can create a settings struct and override each property. If you don't pass in a settings struct, the default values will be used instead.
      - Returns: the popover view
     */
-    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>, popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
+    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>,  popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
         self.modifier(PopoverViewModifier(contentView: content, backgroundView: background, show: isPresented,  frame: frame, popoverType: popoverType, position: position, viewId: viewId, settings: settings))
     }
 }
