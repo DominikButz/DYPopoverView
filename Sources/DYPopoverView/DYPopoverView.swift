@@ -19,30 +19,30 @@ struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifie
     var backgroundView: ()->BackgroundView
     @Binding var show: Bool
     @Binding var frame: CGRect
+    var anchorFrame: CGRect?
     var popoverType: PopoverType
     var position: ViewPosition
     var viewId: String
     var settings: DYPopoverViewSettings
     
      func body(content: Content) -> some View {
-        content
-        .overlayPreferenceValue(DYPopoverViewOriginPreferenceKey.self) { preferences in
 
-                 return GeometryReader { geometry in
-                         ZStack {
-                         
-                            return self.popoverView(geometry, preferences, popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, background: self.backgroundView, position: self.position, viewId: self.viewId, settings: self.settings)
+               ZStack(alignment: .topLeading) {
+                   content
+                    self.popoverView(popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, anchorFrame: self.anchorFrame, background: self.backgroundView, position: self.position, viewId: self.viewId, settings: self.settings)
 
-                         }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                 }
-         }
+                 }.edgesIgnoringSafeArea(.all)
+                 
+         
     }
     
-    internal func popoverView<ContentView: View, BackgroundView: View>(_ geometry: GeometryProxy, _ preferences: [DYPopoverViewOriginPreference], popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, background: @escaping ()->BackgroundView,  position: ViewPosition, viewId: String?, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
+    internal func popoverView<ContentView: View, BackgroundView: View>(popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect?, background: @escaping ()->BackgroundView,  position: ViewPosition, viewId: String?, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
 
-          let originPreference = preferences.first(where: { $0.viewId == viewId })
-        let originBounds: CGRect = originPreference != nil ? geometry[originPreference!.bounds] : .zero
-
+//          let originPreference = preferences.first(where: { $0.viewId == viewId })
+//        let originBounds: CGRect = originPreference != nil ? geometry[originPreference!.bounds] : .zero
+//
+        
+        let originBounds = anchorFrame ?? .zero
 
          return  content()
              .modifier(PopoverFrame(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType))
@@ -198,8 +198,8 @@ public extension View {
     - Parameter settings: a DYPopoverViewSettings struct. You can create a settings struct and override each property. If you don't pass in a settings struct, the default values will be used instead.
      - Returns: the popover view
     */
-    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>,  popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
-        self.modifier(PopoverViewModifier(contentView: content, backgroundView: background, show: isPresented,  frame: frame, popoverType: popoverType, position: position, viewId: viewId, settings: settings))
+    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect?,  popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
+        self.modifier(PopoverViewModifier(contentView: content, backgroundView: background, show: isPresented,  frame: frame, anchorFrame: anchorFrame,  popoverType: popoverType, position: position, viewId: viewId, settings: settings))
     }
 }
 
@@ -274,5 +274,34 @@ public struct DYPopoverViewSettings {
      var viewId: String
     /// popover origin view bounds Anchor.
      var bounds: Anchor<CGRect>
+}
+
+
+import SwiftUI
+
+struct FrameCapture: View {
+    
+    @Binding var rect: CGRect?
+    var coordinateSpace: CoordinateSpace
+    
+    var body: some View {
+        GeometryReader { proxy in
+            self.setFrame(proxy: proxy)
+        }
+    }
+    
+    func setFrame(proxy: GeometryProxy)->some View {
+        DispatchQueue.main.async {
+            self.rect = proxy.frame(in: coordinateSpace)
+        }
+        return Rectangle().fill(Color.clear)
+    }
+}
+
+public extension View {
+    
+    func anchorFrame(rect:Binding<CGRect?>, coordinateSpace: CoordinateSpace = .global)->some View {
+        self.background(FrameCapture(rect: rect, coordinateSpace: coordinateSpace))
+    }
 }
 
