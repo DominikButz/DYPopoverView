@@ -134,6 +134,9 @@ See the following example for details.
 
 ## Change log
 
+#### [Version 1.0.1](https://github.com/DominikButz/DYPopoverView/releases/tag/1.0.1)
+slight improvment for navigation item as anchor view.
+
 #### [Version 1.0](https://github.com/DominikButz/DYPopoverView/releases/tag/1.0)
  Initializer changed - added background. Removed backgroundColor from settings. 
 

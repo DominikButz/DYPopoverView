@@ -29,11 +29,12 @@ struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifie
         .overlayPreferenceValue(DYPopoverViewOriginPreferenceKey.self) { preferences in
 
                  return GeometryReader { geometry in
-                         ZStack {
+                    ZStack(alignment: .topLeading) {
                          
                             return self.popoverView(geometry, preferences, popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, background: self.backgroundView, position: self.position, viewId: self.viewId, settings: self.settings)
 
-                         }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    }
+                    //.edgesIgnoringSafeArea(.all)
                  }
          }
     }
