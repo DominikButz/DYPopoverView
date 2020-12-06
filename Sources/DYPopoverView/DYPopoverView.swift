@@ -19,7 +19,7 @@ struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifie
     var backgroundView: ()->BackgroundView
     @Binding var show: Bool
     @Binding var frame: CGRect
-    var anchorFrame: CGRect?
+    var anchorFrame: CGRect
     var popoverType: PopoverType
     var position: ViewPosition
     var settings: DYPopoverViewSettings
@@ -35,9 +35,9 @@ struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifie
          
     }
     
-    internal func popoverView<ContentView: View, BackgroundView: View>(popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect?, background: @escaping ()->BackgroundView,  position: ViewPosition, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
+    internal func popoverView<ContentView: View, BackgroundView: View>(popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect, background: @escaping ()->BackgroundView,  position: ViewPosition, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
 
-        let originBounds = anchorFrame ?? .zero
+        let originBounds = anchorFrame
 
          return  content()
              .modifier(PopoverFrame(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType))
@@ -192,7 +192,7 @@ public extension View {
     - Parameter settings: a DYPopoverViewSettings struct. You can create a settings struct and override each property. If you don't pass in a settings struct, the default values will be used instead.
      - Returns: the popover view
     */
-    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect?,  popoverType: PopoverType, position: ViewPosition, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
+    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect,  popoverType: PopoverType, position: ViewPosition, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
         self.modifier(PopoverViewModifier(contentView: content, backgroundView: background, show: isPresented,  frame: frame, anchorFrame: anchorFrame,  popoverType: popoverType, position: position, settings: settings))
     }
 }
@@ -275,7 +275,7 @@ import SwiftUI
 
 struct FrameCapture: View {
     
-    @Binding var rect: CGRect?
+    @Binding var rect: CGRect
     var coordinateSpace: CoordinateSpace
     
     var body: some View {
@@ -294,7 +294,7 @@ struct FrameCapture: View {
 
 public extension View {
     
-    func anchorFrame(rect:Binding<CGRect?>, coordinateSpace: CoordinateSpace = .global)->some View {
+    func anchorFrame(rect:Binding<CGRect>, coordinateSpace: CoordinateSpace = .global)->some View {
         self.background(FrameCapture(rect: rect, coordinateSpace: coordinateSpace))
     }
 }
