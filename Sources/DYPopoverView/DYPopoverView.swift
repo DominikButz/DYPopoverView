@@ -12,37 +12,61 @@ import SwiftUI
 public enum PopoverType {
     case popover, popout
 }
-
+//TODO: merge both methods to create popover - with preference and with anchorFrame
 struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifier {
     
     var contentView: ()->ContentView
     var backgroundView: ()->BackgroundView
     @Binding var show: Bool
     @Binding var frame: CGRect
-    var anchorFrame: CGRect
+    var anchorFrame: CGRect?
     var popoverType: PopoverType
     var position: ViewPosition
+    var viewId: String
     var settings: DYPopoverViewSettings
     
      func body(content: Content) -> some View {
+        Group {
+            if anchorFrame != nil {
 
-               ZStack(alignment: .topLeading) {
-                   content
-                    self.popoverView(popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, anchorFrame: self.anchorFrame, background: self.backgroundView, position: self.position, settings: self.settings)
+              ZStack(alignment: .topLeading) {
+                
+                content
+                
+                self.popoverView(geometry: nil, preferences: [], popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, anchorFrame: self.anchorFrame, background: self.backgroundView, position: self.position, viewId: viewId, settings: self.settings)
 
                  }.edgesIgnoringSafeArea(.all)
-                 
-         
+                
+            } else {
+               content
+                    .overlayPreferenceValue(DYPopoverViewOriginPreferenceKey.self) { preferences in
+
+                         return GeometryReader { geometry in
+                            ZStack(alignment: .topLeading) {
+                                 
+                                return self.popoverView(geometry: geometry, preferences: preferences, popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, anchorFrame: nil, background: self.backgroundView, position: self.position, viewId: self.viewId, settings: self.settings)
+
+                            }
+                            //.edgesIgnoringSafeArea(.all)
+                         }
+                 }
+            }
+        }
     }
     
-    internal func popoverView<ContentView: View, BackgroundView: View>(popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect, background: @escaping ()->BackgroundView,  position: ViewPosition, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
-
-        let originBounds = anchorFrame
+    internal func popoverView<ContentView: View, BackgroundView: View>(geometry: GeometryProxy?, preferences: [DYPopoverViewOriginPreference], popoverType: PopoverType, @ViewBuilder content:  @escaping ()->ContentView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect?, background: @escaping ()->BackgroundView,  position: ViewPosition, viewId: String, settings: DYPopoverViewSettings = DYPopoverViewSettings()) -> some View {
+        
+        var originBounds = CGRect.zero
+        if let anchorFrame = anchorFrame {
+            originBounds = anchorFrame
+        } else if let originPreference = preferences.first(where: { $0.viewId == viewId }), let geometry = geometry {
+           originBounds = geometry[originPreference.bounds]
+        }
+     
 
          return  content()
              .modifier(PopoverFrame(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType))
             .background(background().frame(width:frame.wrappedValue.width + settings.arrowLength * 2, height: frame.wrappedValue.height + settings.arrowLength * 2))
-//             .background(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius).fill(settings.backgroundColor))
              .opacity(isPresented.wrappedValue ? 1 : 0)
             .clipShape(RoundedArrowRectangle(arrowPosition: self.arrowPosition(viewPosition: position, settings: settings), arrowLength: settings.arrowLength, cornerRadius: settings.cornerRadius))
             .shadow(color: settings.shadowColor, radius: settings.shadowRadius)
@@ -184,7 +208,7 @@ public extension View {
     /**
     popoverView function.
      - Parameter content: the content that shall appear inside the popover view.
-     - Parameter background: Background view of the DYPopover. Don't set a frame or decorations like shadow etc.
+     - Parameter background: Background view of the DYPopover. Don't set a frame or decorations like shadow etc. This will be added through DYPopoverSettings parameter values.
      - Parameter isPresented: pass in the state binding which determines if the popover should be displayed.
      - Parameter  frame: the frame of the popover view. As a Binding var, it can be changed during presentation is necessary.
      - Parameter popoverType: the type of the popover - popout or popover
@@ -192,8 +216,8 @@ public extension View {
     - Parameter settings: a DYPopoverViewSettings struct. You can create a settings struct and override each property. If you don't pass in a settings struct, the default values will be used instead.
      - Returns: the popover view
     */
-    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect,  popoverType: PopoverType, position: ViewPosition, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
-        self.modifier(PopoverViewModifier(contentView: content, backgroundView: background, show: isPresented,  frame: frame, anchorFrame: anchorFrame,  popoverType: popoverType, position: position, settings: settings))
+    func popoverView<ContentView: View, BackgroundView: View>(content: @escaping ()->ContentView, background: @escaping ()->BackgroundView, isPresented: Binding<Bool>, frame: Binding<CGRect>, anchorFrame: CGRect?,  popoverType: PopoverType, position: ViewPosition, viewId: String, settings:DYPopoverViewSettings = DYPopoverViewSettings())->some View  {
+        self.modifier(PopoverViewModifier(contentView: content, backgroundView: background, show: isPresented,  frame: frame, anchorFrame: anchorFrame,  popoverType: popoverType, position: position, viewId: viewId, settings: settings))
     }
 }
 

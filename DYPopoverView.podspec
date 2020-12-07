@@ -6,7 +6,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'DYPopoverView'
-  s.version          = '1.0'
+  s.version          = '1.1'
   s.summary          = 'SwiftUI implementation of a popover view with arrow'
   s.swift_version = '5.1'
 
