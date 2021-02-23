@@ -36,6 +36,7 @@ struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifie
                 self.popoverView(geometry: nil, preferences: [], popoverType: self.popoverType, content: self.contentView, isPresented: self.$show, frame: self.$frame, anchorFrame: self.anchorFrame, background: self.backgroundView, position: self.position, viewId: viewId, settings: self.settings)
 
               }.edgesIgnoringSafeArea(.all)
+         
             } else {
                content
                     .overlayPreferenceValue(DYPopoverViewOriginPreferenceKey.self) { preferences in
@@ -64,7 +65,8 @@ struct PopoverViewModifier<ContentView: View, BackgroundView: View>: ViewModifie
         }
      
 
-         return  content()
+         return
+            content()
              .modifier(PopoverFrame(isPresented: isPresented, viewFrame: frame.wrappedValue, originBounds: originBounds, popoverType: popoverType))
             .background(background().frame(width:frame.wrappedValue.width + settings.arrowLength * 2, height: frame.wrappedValue.height + settings.arrowLength * 2))
              .opacity(isPresented.wrappedValue ? 1 : 0)

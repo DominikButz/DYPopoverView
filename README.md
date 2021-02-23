@@ -143,6 +143,9 @@ struct PopoverPlayground: View {
 
 ## Change log
 
+#### [Version1.1.1](https://github.com/DominikButz/DYPopoverView/releases/tag/1.1.1)
+Minor changes.
+
 #### [Version 1.1](https://github.com/DominikButz/DYPopoverView/releases/tag/1.1)
  Added alternative way to initialize popover - with an anchorFrame instead of a view id. 
  If the anchor view is a NavigationBar item, the popover does not always appear properly if initialized with a view id.
